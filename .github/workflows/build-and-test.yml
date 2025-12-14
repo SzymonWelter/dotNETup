@@ -1,0 +1,23 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Restore dependencies
+      run: dotnet restore DotNetUp.sln
+
+    - name: Build
+      run: dotnet build DotNetUp.sln --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test DotNetUp.sln --configuration Release --no-build --verbosity normal
