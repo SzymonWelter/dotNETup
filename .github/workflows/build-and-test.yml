@@ -2,7 +2,10 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
+      - 'claude/**'  # Trigger on all claude branches for validation
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
@@ -22,3 +25,10 @@ jobs:
 
     - name: Run tests
       run: dotnet test DotNetUp.sln --configuration Release --no-build --verbosity normal
+
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "✅ Build and test completed"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
