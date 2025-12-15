@@ -298,7 +298,7 @@ public class InstallationBuilderTests
         var builder = new InstallationBuilder();
 
         // Act
-        var result = builder.WithProgress(null);
+        var result = builder.WithProgress(null!);
 
         // Assert
         result.Should().Be(builder);
