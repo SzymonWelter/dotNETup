@@ -49,46 +49,59 @@ public class Installation
         // Phase 2: Execute steps sequentially
         var executedSteps = new List<IInstallationStep>();
 
-        for (int i = 0; i < _steps.Count; i++)
+        try
         {
-            var step = _steps[i];
-            var stepNumber = i + 1;
-
-            // Check for cancellation
-            _context.CancellationToken.ThrowIfCancellationRequested();
-
-            // Set current step context
-            _context.SetCurrentStep(stepNumber, _steps.Count, step.Name);
-
-            _context.Logger.LogInformation(
-                "Executing step {StepNumber}/{TotalSteps}: {StepName}",
-                stepNumber, _steps.Count, step.Name);
-
-            // Execute the step
-            var result = await step.ExecuteAsync(_context);
-            executedSteps.Add(step);
-
-            if (!result.Success)
+            for (int i = 0; i < _steps.Count; i++)
             {
-                _context.Logger.LogError(
-                    "Step {StepNumber}/{TotalSteps} ({StepName}) failed: {Message}",
-                    stepNumber, _steps.Count, step.Name, result.Message);
+                var step = _steps[i];
+                var stepNumber = i + 1;
 
-                // Trigger rollback
-                await RollbackAsync(executedSteps);
+                // Check for cancellation
+                _context.CancellationToken.ThrowIfCancellationRequested();
 
-                return InstallationResult.FailureResult(
-                    $"Installation failed at step {stepNumber} ({step.Name}): {result.Message}",
-                    result.Exception);
+                // Set current step context
+                _context.SetCurrentStep(stepNumber, _steps.Count, step.Name);
+
+                _context.Logger.LogInformation(
+                    "Executing step {StepNumber}/{TotalSteps}: {StepName}",
+                    stepNumber, _steps.Count, step.Name);
+
+                // Execute the step
+                var result = await step.ExecuteAsync(_context);
+                executedSteps.Add(step);
+
+                if (!result.Success)
+                {
+                    _context.Logger.LogError(
+                        "Step {StepNumber}/{TotalSteps} ({StepName}) failed: {Message}",
+                        stepNumber, _steps.Count, step.Name, result.Message);
+
+                    // Trigger rollback
+                    await RollbackAsync(executedSteps);
+
+                    return InstallationResult.FailureResult(
+                        $"Installation failed at step {stepNumber} ({step.Name}): {result.Message}",
+                        result.Exception);
+                }
+
+                _context.Logger.LogInformation(
+                    "Step {StepNumber}/{TotalSteps} ({StepName}) completed successfully",
+                    stepNumber, _steps.Count, step.Name);
             }
 
-            _context.Logger.LogInformation(
-                "Step {StepNumber}/{TotalSteps} ({StepName}) completed successfully",
-                stepNumber, _steps.Count, step.Name);
+            _context.Logger.LogInformation("Installation completed successfully");
+            return InstallationResult.SuccessResult("Installation completed successfully");
         }
+        catch (OperationCanceledException)
+        {
+            _context.Logger.LogWarning("Installation cancelled by user");
 
-        _context.Logger.LogInformation("Installation completed successfully");
-        return InstallationResult.SuccessResult("Installation completed successfully");
+            // Trigger rollback for executed steps
+            await RollbackAsync(executedSteps);
+
+            // Rethrow to propagate cancellation
+            throw;
+        }
     }
 
     /// <summary>

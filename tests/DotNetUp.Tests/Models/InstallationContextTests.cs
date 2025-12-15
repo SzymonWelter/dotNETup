@@ -201,6 +201,7 @@ public class InstallationContextTests
         context.ReportStepProgress("Processing", 50);
 
         // Assert
+        progressReports.Should().HaveCount(1, "because one progress report should have been generated");
         var report = progressReports[0];
         // Step 2 of 4 at 50% = (1 * 100 + 50) / 4 = 37.5%
         report.OverallPercentComplete.Should().BeApproximately(37.5, 0.01);
