@@ -152,10 +152,14 @@ All components mockable. Each step independently unit testable.
 ## Testing
 
 - Use **xUnit** framework
+- Use **NSubstitute** for mocking
+- Use **FluentAssertions** for readable assertions
 - Create **TestInstallationContext** fixture
 - Mock **file system, registry, database** etc.
 - Test **success path, failure path, rollback path**
 - Test **edge cases** (already exists, missing prerequisites)
+
+**See detailed testing guidelines:** `tests/DotNetUp.Tests/README.md`
 
 ---
 
