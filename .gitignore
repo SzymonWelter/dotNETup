@@ -51,4 +51,7 @@ CodeCoverage/
 # NUnit
 *.VisualState.xml
 TestResult.xml
-nunit-*.xml.github-token.sh
+nunit-*.xml
+
+# GitHub token (contains secrets, never commit)
+.github-token.sh
