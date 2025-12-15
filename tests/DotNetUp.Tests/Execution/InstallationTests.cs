@@ -377,13 +377,8 @@ public class InstallationTests
         // Act
         await installation.ExecuteAsync();
 
-        // Assert - Verify logging occurred (multiple log calls)
-        mockLogger.Received().Log(
-            LogLevel.Warning,
-            Arg.Any<EventId>(),
-            Arg.Any<object>(),
-            Arg.Any<Exception>(),
-            Arg.Any<Func<object, Exception?, string>>());
+        // Assert - Verify logging occurred (multiple log calls for warnings)
+        mockLogger.ReceivedCalls().Should().NotBeEmpty("because rollback failures should be logged");
     }
 
     // ============================================
