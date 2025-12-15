@@ -13,7 +13,7 @@ public class InstallationBuilder
     private readonly List<IInstallationStep> _steps = new();
     private readonly Dictionary<string, object> _properties = new();
     private ILogger? _logger;
-    private IProgress<string>? _progress;
+    private IProgress<InstallationProgress>? _progress;
     private CancellationToken _cancellationToken = default;
 
     /// <summary>
@@ -63,7 +63,7 @@ public class InstallationBuilder
     /// </summary>
     /// <param name="progress">Progress reporter</param>
     /// <returns>This builder for fluent chaining</returns>
-    public InstallationBuilder WithProgress(IProgress<string> progress)
+    public InstallationBuilder WithProgress(IProgress<InstallationProgress> progress)
     {
         _progress = progress;
         return this;
