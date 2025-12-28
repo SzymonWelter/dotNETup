@@ -53,5 +53,7 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
-# GitHub token (contains secrets, never commit)
+# GitHub token and MCP config (contains secrets, never commit)
 .github-token.sh
+.mcp.json
+.claude/.mcp.json
