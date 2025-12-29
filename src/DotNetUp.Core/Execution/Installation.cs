@@ -7,7 +7,7 @@ namespace DotNetUp.Core.Execution;
 /// <summary>
 /// Orchestrates the execution of installation steps with validation, execution, and rollback.
 /// </summary>
-public class Installation
+internal class Installation : IInstallation
 {
     private readonly IReadOnlyList<IInstallationStep> _steps;
     private readonly InstallationContext _context;

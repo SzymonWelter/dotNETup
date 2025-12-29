@@ -169,16 +169,6 @@ dotnet test --logger "console;verbosity=detailed"
 dotnet test /p:CollectCoverage=true
 ```
 
-### Using Visual Studio
-- Test Explorer (Ctrl+E, T)
-- Run All / Run Selected
-- Debug Tests
-
-### Using Rider
-- Unit Tests window
-- Run / Debug individual or all tests
-- View coverage inline
-
 ---
 
 ## Test Coverage Goals

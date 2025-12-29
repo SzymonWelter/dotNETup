@@ -1,3 +1,4 @@
+using DotNetUp.Core.Execution;
 using DotNetUp.Core.Interfaces;
 using DotNetUp.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -82,10 +83,10 @@ public class InstallationBuilder
 
     /// <summary>
     /// Builds the installation configuration.
-    /// Returns the list of steps and the context to use for execution.
+    /// Returns an installation instance ready to be executed.
     /// </summary>
-    /// <returns>A tuple containing the steps and context</returns>
-    public (IReadOnlyList<IInstallationStep> Steps, InstallationContext Context) Build()
+    /// <returns>An installation instance ready for execution</returns>
+    public IInstallation Build()
     {
         if (_steps.Count == 0)
             throw new InvalidOperationException("At least one installation step is required");
@@ -101,6 +102,6 @@ public class InstallationBuilder
             context.Properties[kvp.Key] = kvp.Value;
         }
 
-        return (_steps.AsReadOnly(), context);
+        return new Installation(_steps.AsReadOnly(), context);
     }
 }

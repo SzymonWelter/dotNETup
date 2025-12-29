@@ -32,7 +32,7 @@ public class InstallationContextTests
         context.Logger.Should().Be(logger);
         context.Properties.Should().NotBeNull().And.BeEmpty();
         context.Progress.Should().BeNull();
-        context.CancellationToken.Should().Be(default);
+        context.CancellationToken.Should().Be(CancellationToken.None);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class InstallationContextTests
     }
 
     [Fact]
-    public void SetCurrentStep_UpdatesInternalState()
+    public async Task SetCurrentStep_UpdatesInternalState()
     {
         // Arrange
         var context = TestInstallationContext.Create();
@@ -72,6 +72,8 @@ public class InstallationContextTests
         contextWithProgress.SetCurrentStep(2, 5, "TestStep");
         contextWithProgress.ReportStepProgress("Working", 50);
 
+        await Task.Yield();
+
         progressReports.Should().HaveCount(1);
         progressReports[0].CurrentStepNumber.Should().Be(2);
         progressReports[0].TotalSteps.Should().Be(5);
@@ -79,7 +81,7 @@ public class InstallationContextTests
     }
 
     [Fact]
-    public void ReportStepProgress_CreatesCorrectInstallationProgress()
+    public async Task ReportStepProgress_CreatesCorrectInstallationProgress()
     {
         // Arrange
         var progressReports = new List<InstallationProgress>();
@@ -90,6 +92,8 @@ public class InstallationContextTests
 
         // Act
         context.ReportStepProgress("Copying files", 75);
+
+        await Task.Yield();
 
         // Assert
         progressReports.Should().HaveCount(1);
@@ -122,7 +126,7 @@ public class InstallationContextTests
     }
 
     [Fact]
-    public void ReportStepProgress_CallsProgressReporter()
+    public async Task ReportStepProgress_CallsProgressReporter()
     {
         // Arrange
         var progressReports = new List<InstallationProgress>();
@@ -135,6 +139,8 @@ public class InstallationContextTests
         context.ReportStepProgress("Substep 1", 25);
         context.ReportStepProgress("Substep 2", 50);
         context.ReportStepProgress("Substep 3", 100);
+
+        await Task.Yield();
 
         // Assert
         progressReports.Should().HaveCount(3);
@@ -188,7 +194,7 @@ public class InstallationContextTests
     }
 
     [Fact]
-    public void ReportStepProgress_CalculatesOverallProgress_Correctly()
+    public async Task ReportStepProgress_CalculatesOverallProgress_Correctly()
     {
         // Arrange
         var progressReports = new List<InstallationProgress>();
@@ -199,6 +205,8 @@ public class InstallationContextTests
 
         // Act
         context.ReportStepProgress("Processing", 50);
+
+        await Task.Yield();
 
         // Assert
         progressReports.Should().HaveCount(1, "because one progress report should have been generated");

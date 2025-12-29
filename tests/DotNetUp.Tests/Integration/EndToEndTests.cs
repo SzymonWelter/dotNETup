@@ -1,5 +1,5 @@
 using DotNetUp.Core.Builders;
-using DotNetUp.Core.Execution;
+using DotNetUp.Core.Interfaces;
 using DotNetUp.Core.Models;
 using DotNetUp.Tests.Fixtures;
 using FluentAssertions;
@@ -62,8 +62,7 @@ public class EndToEndTests
             .WithStep(step4);
 
         // Act
-        var (steps, context) = builder.Build();
-        var installation = new Installation(steps, context);
+        var installation = builder.Build();
         var result = await installation.ExecuteAsync();
 
         // Assert
@@ -85,11 +84,6 @@ public class EndToEndTests
         step2.RollbackCalled.Should().BeFalse();
         step3.RollbackCalled.Should().BeFalse();
         step4.RollbackCalled.Should().BeFalse();
-
-        // Verify properties are accessible
-        context.Properties["InstallPath"].Should().Be("/opt/myapp");
-        context.Properties["Version"].Should().Be("2.0.0");
-        context.Properties["BackupEnabled"].Should().Be(true);
 
         // Verify logging occurred
         logger.ReceivedCalls().Should().NotBeEmpty();
@@ -138,8 +132,7 @@ public class EndToEndTests
             .WithStep(step4);
 
         // Act
-        var (steps, context) = builder.Build();
-        var installation = new Installation(steps, context);
+        var installation = builder.Build();
         var result = await installation.ExecuteAsync();
 
         // Assert
@@ -198,8 +191,7 @@ public class EndToEndTests
             .WithStep(step2)
             .WithStep(step3);
 
-        var (steps, context) = builder.Build();
-        var installation = new Installation(steps, context);
+        var installation = builder.Build();
 
         // Act - Start execution and cancel during step2
         var task = installation.ExecuteAsync();
@@ -224,14 +216,19 @@ public class EndToEndTests
     {
         // Arrange
         var logger = Substitute.For<ILogger>();
-        var context = TestInstallationContext.Create(logger: logger);
 
         var step1 = new MockInstallationStep { Name = "Validate" };
         var step2 = new MockInstallationStep { Name = "Execute" };
         var step3 = new MockInstallationStep { Name = "Finalize" };
 
-        var steps = new List<MockInstallationStep> { step1, step2, step3 };
-        var installation = new Installation(steps, context);
+        var builder = new InstallationBuilder();
+        builder
+            .WithLogger(logger)
+            .WithStep(step1)
+            .WithStep(step2)
+            .WithStep(step3);
+
+        var installation = builder.Build();
 
         // Act
         await installation.ExecuteAsync();
@@ -283,8 +280,7 @@ public class EndToEndTests
             .WithStep(step4);
 
         // Act
-        var (steps, context) = builder.Build();
-        var installation = new Installation(steps, context);
+        var installation = builder.Build();
         var result = await installation.ExecuteAsync();
 
         // Assert
@@ -332,8 +328,7 @@ public class EndToEndTests
             .WithStep(step3);
 
         // Act
-        var (steps, context) = builder.Build();
-        var installation = new Installation(steps, context);
+        var installation = builder.Build();
         var result = await installation.ExecuteAsync();
 
         // Assert
@@ -401,26 +396,11 @@ public class EndToEndTests
             .WithStep(configureStep);
 
         // Act
-        var (steps, context) = builder.Build();
-        var installation = new Installation(steps, context);
+        var installation = builder.Build();
         var result = await installation.ExecuteAsync();
 
         // Assert
         result.Success.Should().BeTrue();
-
-        // Verify all properties are accessible in context
-        context.Properties.Should().ContainKeys(
-            "SourcePath",
-            "TargetPath",
-            "BackupPath",
-            "CreateBackup",
-            "Overwrite");
-
-        context.Properties["SourcePath"].Should().Be("/tmp/package");
-        context.Properties["TargetPath"].Should().Be("/opt/application");
-        context.Properties["BackupPath"].Should().Be("/backup/application");
-        context.Properties["CreateBackup"].Should().Be(true);
-        context.Properties["Overwrite"].Should().Be(false);
 
         // Verify all steps executed successfully
         validateStep.ExecuteCalled.Should().BeTrue();

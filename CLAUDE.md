@@ -165,42 +165,27 @@ All components mockable. Each step independently unit testable.
 
 ## Build Commands
 
-### Local Development (with .NET SDK)
+**Standard Development Workflow:**
+
 ```bash
-dotnet build          # Compile
-dotnet test           # Run all tests
-dotnet test --filter  # Run specific tests
-```
+# Build the solution
+dotnet build
 
-### Claude Code Web (No .NET SDK Available)
+# Run all tests
+dotnet test
 
-**IMPORTANT:** When developing in Claude Code web without local .NET SDK:
+# Run specific test class or method
+dotnet test --filter "FullyQualifiedName~CopyFileStep"
 
-1. **Always build and test after implementation** - Code must compile before considering a component complete
-2. **Trigger GitHub Actions workflow** to validate on self-hosted runner (Raspberry Pi)
-3. **Check build status** before continuing to next component
-
-**Workflow:**
-```bash
-# After writing code, commit and push
-git add .
-git commit -m "Implement feature X"
-git push
-
-# Check build status using GitHub API (if GITHUB_TOKEN is set)
-curl -H "Authorization: token $GITHUB_TOKEN" \
-  "https://api.github.com/repos/SzymonWelter/dotNETup/actions/runs?branch=<branch>&per_page=1"
-
-# Or manually trigger workflow
-# Go to: https://github.com/SzymonWelter/dotNETup/actions
-# Click "Run workflow" on the branch
+# Run with verbose output
+dotnet test --verbosity normal
 ```
 
 **Build Validation Rules:**
-- ✅ Green build = Continue to next component
-- ❌ Red build = Fix compilation errors immediately
-- ⏸️ No .NET locally = Push and wait for GitHub Actions validation
-- 🔄 Build must pass before moving to next feature
+- ✅ Always build and test locally after implementation
+- ✅ Code must compile with zero errors before committing
+- ✅ All tests must pass before moving to next feature
+- ✅ Fix any failing tests immediately
 
 ---
 
