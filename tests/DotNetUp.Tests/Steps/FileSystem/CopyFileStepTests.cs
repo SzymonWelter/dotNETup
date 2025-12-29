@@ -355,6 +355,13 @@ public class CopyFileStepTests : IDisposable
     [Fact]
     public async Task RollbackAsync_WhenDestinationIsLocked_ReturnsFailure()
     {
+        // Skip on non-Windows platforms where file locking works differently
+        if (!OperatingSystem.IsWindows())
+        {
+            // On Linux/macOS, you can delete a file while it's open
+            return;
+        }
+
         // Arrange
         File.WriteAllText(_sourceFile, "test content");
         var step = new CopyFileStep(_sourceFile, _destinationFile);
