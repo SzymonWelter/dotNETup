@@ -1,3 +1,4 @@
+using DotNetUp.Core.Execution;
 using DotNetUp.Core.Interfaces;
 using DotNetUp.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ public class InstallationBuilder
     private readonly List<IInstallationStep> _steps = new();
     private readonly Dictionary<string, object> _properties = new();
     private ILogger? _logger;
-    private IProgress<string>? _progress;
+    private IProgress<InstallationProgress>? _progress;
     private CancellationToken _cancellationToken = default;
 
     /// <summary>
@@ -63,7 +64,7 @@ public class InstallationBuilder
     /// </summary>
     /// <param name="progress">Progress reporter</param>
     /// <returns>This builder for fluent chaining</returns>
-    public InstallationBuilder WithProgress(IProgress<string> progress)
+    public InstallationBuilder WithProgress(IProgress<InstallationProgress> progress)
     {
         _progress = progress;
         return this;
@@ -82,10 +83,10 @@ public class InstallationBuilder
 
     /// <summary>
     /// Builds the installation configuration.
-    /// Returns the list of steps and the context to use for execution.
+    /// Returns an installation instance ready to be executed.
     /// </summary>
-    /// <returns>A tuple containing the steps and context</returns>
-    public (IReadOnlyList<IInstallationStep> Steps, InstallationContext Context) Build()
+    /// <returns>An installation instance ready for execution</returns>
+    public IInstallation Build()
     {
         if (_steps.Count == 0)
             throw new InvalidOperationException("At least one installation step is required");
@@ -101,6 +102,6 @@ public class InstallationBuilder
             context.Properties[kvp.Key] = kvp.Value;
         }
 
-        return (_steps.AsReadOnly(), context);
+        return new Installation(_steps.AsReadOnly(), context);
     }
 }
