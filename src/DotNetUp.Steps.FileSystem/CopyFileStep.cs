@@ -2,7 +2,7 @@ using DotNetUp.Core.Interfaces;
 using DotNetUp.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace DotNetUp.Core.Steps.FileSystem;
+namespace DotNetUp.Steps.FileSystem;
 
 /// <summary>
 /// Installation step that copies a file from source to destination.
@@ -56,7 +56,7 @@ public class CopyFileStep : IInstallationStep
     }
 
     /// <inheritdoc />
-    public Task<InstallationResult> ValidateAsync(InstallationContext context)
+    public Task<InstallationStepResult> ValidateAsync(InstallationContext context)
     {
         context.Logger.LogDebug("Validating CopyFileStep: {Source} -> {Destination}", SourcePath, DestinationPath);
 
@@ -65,7 +65,7 @@ public class CopyFileStep : IInstallationStep
             // Check if source file exists
             if (!File.Exists(SourcePath))
             {
-                return Task.FromResult(InstallationResult.FailureResult(
+                return Task.FromResult(InstallationStepResult.FailureResult(
                     $"Source file does not exist: {SourcePath}"));
             }
 
@@ -73,14 +73,14 @@ public class CopyFileStep : IInstallationStep
             var destinationDir = Path.GetDirectoryName(DestinationPath);
             if (!string.IsNullOrEmpty(destinationDir) && !Directory.Exists(destinationDir))
             {
-                return Task.FromResult(InstallationResult.FailureResult(
+                return Task.FromResult(InstallationStepResult.FailureResult(
                     $"Destination directory does not exist: {destinationDir}"));
             }
 
             // Check if destination file exists and overwrite is not allowed
             if (File.Exists(DestinationPath) && !Overwrite)
             {
-                return Task.FromResult(InstallationResult.FailureResult(
+                return Task.FromResult(InstallationStepResult.FailureResult(
                     $"Destination file already exists and overwrite is not enabled: {DestinationPath}"));
             }
 
@@ -91,7 +91,7 @@ public class CopyFileStep : IInstallationStep
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Task.FromResult(InstallationResult.FailureResult(
+                return Task.FromResult(InstallationStepResult.FailureResult(
                     $"No read permission for source file: {SourcePath}",
                     ex));
             }
@@ -108,26 +108,26 @@ public class CopyFileStep : IInstallationStep
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    return Task.FromResult(InstallationResult.FailureResult(
+                    return Task.FromResult(InstallationStepResult.FailureResult(
                         $"No write permission for destination directory: {destinationDir}",
                         ex));
                 }
             }
 
             context.Logger.LogDebug("Validation successful for CopyFileStep");
-            return Task.FromResult(InstallationResult.SuccessResult("Validation successful"));
+            return Task.FromResult(InstallationStepResult.SuccessResult("Validation successful"));
         }
         catch (Exception ex)
         {
             context.Logger.LogError(ex, "Unexpected error during validation");
-            return Task.FromResult(InstallationResult.FailureResult(
+            return Task.FromResult(InstallationStepResult.FailureResult(
                 "Unexpected error during validation",
                 ex));
         }
     }
 
     /// <inheritdoc />
-    public Task<InstallationResult> ExecuteAsync(InstallationContext context)
+    public Task<InstallationStepResult> ExecuteAsync(InstallationContext context)
     {
         context.Logger.LogInformation("Executing CopyFileStep: {Source} -> {Destination}", SourcePath, DestinationPath);
 
@@ -149,7 +149,7 @@ public class CopyFileStep : IInstallationStep
             File.Copy(SourcePath, DestinationPath, overwrite: Overwrite);
 
             context.Logger.LogInformation("File copied successfully");
-            return Task.FromResult(InstallationResult.SuccessResult(
+            return Task.FromResult(InstallationStepResult.SuccessResult(
                 $"Successfully copied '{SourcePath}' to '{DestinationPath}'"));
         }
         catch (Exception ex)
@@ -169,14 +169,14 @@ public class CopyFileStep : IInstallationStep
                 }
             }
 
-            return Task.FromResult(InstallationResult.FailureResult(
+            return Task.FromResult(InstallationStepResult.FailureResult(
                 $"Failed to copy file: {ex.Message}",
                 ex));
         }
     }
 
     /// <inheritdoc />
-    public Task<InstallationResult> RollbackAsync(InstallationContext context)
+    public Task<InstallationStepResult> RollbackAsync(InstallationContext context)
     {
         context.Logger.LogInformation("Rolling back CopyFileStep: {Destination}", DestinationPath);
 
@@ -202,14 +202,14 @@ public class CopyFileStep : IInstallationStep
                 context.Logger.LogDebug("No rollback action needed");
             }
 
-            return Task.FromResult(InstallationResult.SuccessResult("Rollback successful"));
+            return Task.FromResult(InstallationStepResult.SuccessResult("Rollback successful"));
         }
         catch (Exception ex)
         {
             // Best-effort rollback: log the error but return success
             // The executor will log this as a warning and continue with other rollbacks
             context.Logger.LogWarning(ex, "Rollback encountered an error (best-effort continues)");
-            return Task.FromResult(InstallationResult.FailureResult(
+            return Task.FromResult(InstallationStepResult.FailureResult(
                 $"Rollback failed: {ex.Message}",
                 ex));
         }

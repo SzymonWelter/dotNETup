@@ -1,4 +1,4 @@
-using DotNetUp.Core.Steps.FileSystem;
+using DotNetUp.Steps.FileSystem;
 using DotNetUp.Tests.Fixtures;
 using FluentAssertions;
 

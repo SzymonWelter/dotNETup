@@ -31,6 +31,18 @@ public class InstallationContext
     /// </summary>
     public CancellationToken CancellationToken { get; init; }
 
+    /// <summary>
+    /// Base installation directory.
+    /// Steps can use this to determine where to install files.
+    /// </summary>
+    public string? InstallationPath { get; init; }
+
+    /// <summary>
+    /// Flag indicating uninstall mode.
+    /// When true, steps should perform uninstallation logic instead of installation.
+    /// </summary>
+    public bool IsUninstall { get; internal set; }
+
     // Internal state for progress tracking
     private int _currentStepNumber;
     private int _totalSteps;

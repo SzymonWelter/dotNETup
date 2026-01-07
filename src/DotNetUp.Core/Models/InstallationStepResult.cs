@@ -4,7 +4,7 @@ namespace DotNetUp.Core.Models;
 /// Represents the result of an installation operation.
 /// Used by all installation steps to return execution status consistently.
 /// </summary>
-public class InstallationResult
+public class InstallationStepResult
 {
     /// <summary>
     /// Indicates whether the operation completed successfully.
@@ -33,9 +33,9 @@ public class InstallationResult
     /// <param name="message">Success message</param>
     /// <param name="data">Optional data dictionary</param>
     /// <returns>A successful InstallationResult</returns>
-    public static InstallationResult SuccessResult(string message, Dictionary<string, object>? data = null)
+    public static InstallationStepResult SuccessResult(string message, Dictionary<string, object>? data = null)
     {
-        return new InstallationResult
+        return new InstallationStepResult
         {
             Success = true,
             Message = message,
@@ -50,9 +50,9 @@ public class InstallationResult
     /// <param name="exception">Optional exception that caused the failure</param>
     /// <param name="data">Optional data dictionary</param>
     /// <returns>A failed InstallationResult</returns>
-    public static InstallationResult FailureResult(string message, Exception? exception = null, Dictionary<string, object>? data = null)
+    public static InstallationStepResult FailureResult(string message, Exception? exception = null, Dictionary<string, object>? data = null)
     {
-        return new InstallationResult
+        return new InstallationStepResult
         {
             Success = false,
             Message = message,

@@ -131,6 +131,75 @@ public class InstallationBuilderTests
     }
 
     [Fact]
+    public void WithOptions_ConfiguresOptions()
+    {
+        // Arrange
+        var builder = new InstallationBuilder();
+        var logger = Substitute.For<ILogger>();
+
+        // Act
+        var result = builder
+            .WithLogger(logger)
+            .WithStep(new MockInstallationStep())
+            .WithOptions(opts =>
+            {
+                opts.RollbackOnFailure = false;
+                opts.ValidateBeforeInstall = false;
+                opts.Timeout = TimeSpan.FromMinutes(60);
+            });
+
+        // Assert
+        result.Should().Be(builder, "builder should return itself for fluent chaining");
+    }
+
+    [Fact]
+    public void WithOptions_WithNullConfigure_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var builder = new InstallationBuilder();
+
+        // Act
+        Action act = () => builder.WithOptions(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("configure");
+    }
+
+    [Fact]
+    public void WithInstallationPath_SetsPath()
+    {
+        // Arrange
+        var builder = new InstallationBuilder();
+
+        // Act
+        var result = builder.WithInstallationPath("/opt/myapp");
+
+        // Assert
+        result.Should().Be(builder, "builder should return itself for fluent chaining");
+    }
+
+    [Fact]
+    public void WithInstallationPath_WithNullOrEmptyPath_ThrowsArgumentException()
+    {
+        // Arrange
+        var builder = new InstallationBuilder();
+
+        // Act
+        Action actNull = () => builder.WithInstallationPath(null!);
+        Action actEmpty = () => builder.WithInstallationPath(string.Empty);
+        Action actWhitespace = () => builder.WithInstallationPath("  ");
+
+        // Assert
+        actNull.Should().Throw<ArgumentException>()
+            .WithParameterName("path");
+        actEmpty.Should().Throw<ArgumentException>()
+            .WithParameterName("path");
+        actWhitespace.Should().Throw<ArgumentException>()
+            .WithParameterName("path");
+    }
+
+    [Fact]
     public void Build_WithoutLogger_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -200,7 +269,7 @@ public class InstallationBuilderTests
 
         // Act
         var installation = builder.Build();
-        await installation.ExecuteAsync();
+        await installation.InstallAsync();
 
         // Assert - Check that properties were accessible during execution
         step.ExecuteCalled.Should().BeTrue("step should have executed with properties in context");
@@ -242,7 +311,7 @@ public class InstallationBuilderTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeTrue();
@@ -345,7 +414,7 @@ public class InstallationBuilderTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeFalse();
@@ -353,5 +422,39 @@ public class InstallationBuilderTests
         // Verify rollback was triggered
         step1.RollbackCalled.Should().BeTrue("step1 should be rolled back");
         step2.RollbackCalled.Should().BeTrue("step2 should be rolled back");
+    }
+
+    [Fact]
+    public async Task Build_WithRollbackDisabled_DoesNotRollbackOnFailure()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+
+        var step1 = new MockInstallationStep
+        {
+            Name = "Step1",
+            ExecuteShouldSucceed = true
+        };
+        var step2 = new MockInstallationStep
+        {
+            Name = "Step2",
+            ExecuteShouldSucceed = false
+        };
+
+        var builder = new InstallationBuilder();
+        builder
+            .WithLogger(logger)
+            .WithOptions(opts => opts.RollbackOnFailure = false)
+            .WithStep(step1)
+            .WithStep(step2);
+
+        // Act
+        var installation = builder.Build();
+        var result = await installation.InstallAsync();
+
+        // Assert
+        result.Success.Should().BeFalse();
+        step1.RollbackCalled.Should().BeFalse("rollback should be disabled");
+        step2.RollbackCalled.Should().BeFalse("rollback should be disabled");
     }
 }

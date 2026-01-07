@@ -27,7 +27,7 @@ public interface IInstallationStep
     /// </summary>
     /// <param name="context">The installation context</param>
     /// <returns>A result indicating whether validation succeeded</returns>
-    Task<InstallationResult> ValidateAsync(InstallationContext context);
+    Task<InstallationStepResult> ValidateAsync(InstallationContext context);
 
     /// <summary>
     /// Executes the installation step.
@@ -36,7 +36,7 @@ public interface IInstallationStep
     /// </summary>
     /// <param name="context">The installation context</param>
     /// <returns>A result indicating whether execution succeeded</returns>
-    Task<InstallationResult> ExecuteAsync(InstallationContext context);
+    Task<InstallationStepResult> ExecuteAsync(InstallationContext context);
 
     /// <summary>
     /// Rolls back the changes made by this step.
@@ -45,5 +45,5 @@ public interface IInstallationStep
     /// </summary>
     /// <param name="context">The installation context</param>
     /// <returns>A result indicating the rollback outcome (failures are logged but not critical)</returns>
-    Task<InstallationResult> RollbackAsync(InstallationContext context);
+    Task<InstallationStepResult> RollbackAsync(InstallationContext context);
 }

@@ -12,7 +12,7 @@ public class InstallationResultTests
         var message = "Operation completed successfully";
 
         // Act
-        var result = InstallationResult.SuccessResult(message);
+        var result = InstallationStepResult.SuccessResult(message);
 
         // Assert
         result.Success.Should().BeTrue();
@@ -28,7 +28,7 @@ public class InstallationResultTests
         var message = "Operation failed";
 
         // Act
-        var result = InstallationResult.FailureResult(message);
+        var result = InstallationStepResult.FailureResult(message);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -49,7 +49,7 @@ public class InstallationResultTests
         };
 
         // Act
-        var result = InstallationResult.SuccessResult(message, data);
+        var result = InstallationStepResult.SuccessResult(message, data);
 
         // Assert
         result.Success.Should().BeTrue();
@@ -67,7 +67,7 @@ public class InstallationResultTests
         var exception = new InvalidOperationException("Test exception");
 
         // Act
-        var result = InstallationResult.FailureResult(message, exception);
+        var result = InstallationStepResult.FailureResult(message, exception);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -83,7 +83,7 @@ public class InstallationResultTests
         var message = "Success";
 
         // Act
-        var result = InstallationResult.SuccessResult(message, null);
+        var result = InstallationStepResult.SuccessResult(message, null);
 
         // Assert
         result.Success.Should().BeTrue();
@@ -97,7 +97,7 @@ public class InstallationResultTests
         var message = "Failure";
 
         // Act
-        var result = InstallationResult.FailureResult(message, data: null);
+        var result = InstallationStepResult.FailureResult(message, data: null);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -113,7 +113,7 @@ public class InstallationResultTests
         var data = new Dictionary<string, object> { ["ErrorCode"] = 500 };
 
         // Act
-        var result = InstallationResult.FailureResult(message, exception, data);
+        var result = InstallationStepResult.FailureResult(message, exception, data);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -127,7 +127,7 @@ public class InstallationResultTests
     public void SuccessResult_WithEmptyMessage_IsAllowed()
     {
         // Arrange & Act
-        var result = InstallationResult.SuccessResult(string.Empty);
+        var result = InstallationStepResult.SuccessResult(string.Empty);
 
         // Assert
         result.Success.Should().BeTrue();
@@ -138,7 +138,7 @@ public class InstallationResultTests
     public void FailureResult_WithEmptyMessage_IsAllowed()
     {
         // Arrange & Act
-        var result = InstallationResult.FailureResult(string.Empty);
+        var result = InstallationStepResult.FailureResult(string.Empty);
 
         // Assert
         result.Success.Should().BeFalse();
@@ -149,7 +149,7 @@ public class InstallationResultTests
     public void Result_Data_IsMutable()
     {
         // Arrange
-        var result = InstallationResult.SuccessResult("Test");
+        var result = InstallationStepResult.SuccessResult("Test");
 
         // Act
         result.Data["NewKey"] = "NewValue";

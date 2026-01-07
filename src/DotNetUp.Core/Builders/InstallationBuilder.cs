@@ -11,14 +11,16 @@ namespace DotNetUp.Core.Builders;
 /// </summary>
 public class InstallationBuilder
 {
-    private readonly List<IInstallationStep> _steps = new();
+    private readonly List<ConfiguredStep> _steps = new();
     private readonly Dictionary<string, object> _properties = new();
+    private readonly InstallationOptions _options = new();
     private ILogger? _logger;
     private IProgress<InstallationProgress>? _progress;
     private CancellationToken _cancellationToken = default;
+    private string? _installationPath;
 
     /// <summary>
-    /// Adds a step to the installation.
+    /// Adds a step to the installation with default options.
     /// Steps are executed in the order they are added.
     /// </summary>
     /// <param name="step">The installation step to add</param>
@@ -28,7 +30,27 @@ public class InstallationBuilder
         if (step == null)
             throw new ArgumentNullException(nameof(step));
 
-        _steps.Add(step);
+        _steps.Add(new ConfiguredStep(step));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a step to the installation with custom options.
+    /// Steps are executed in the order they are added.
+    /// </summary>
+    /// <param name="step">The installation step to add</param>
+    /// <param name="configure">Action to configure step-specific options</param>
+    /// <returns>This builder for fluent chaining</returns>
+    public InstallationBuilder WithStep(IInstallationStep step, Action<InstallationStepOptions> configure)
+    {
+        if (step == null)
+            throw new ArgumentNullException(nameof(step));
+        if (configure == null)
+            throw new ArgumentNullException(nameof(configure));
+
+        var options = new InstallationStepOptions();
+        configure(options);
+        _steps.Add(new ConfiguredStep(step, options));
         return this;
     }
 
@@ -82,6 +104,34 @@ public class InstallationBuilder
     }
 
     /// <summary>
+    /// Configures installation options using a configuration action.
+    /// </summary>
+    /// <param name="configure">Action to configure options</param>
+    /// <returns>This builder for fluent chaining</returns>
+    public InstallationBuilder WithOptions(Action<InstallationOptions> configure)
+    {
+        if (configure == null)
+            throw new ArgumentNullException(nameof(configure));
+
+        configure(_options);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the base installation path.
+    /// </summary>
+    /// <param name="path">Installation directory path</param>
+    /// <returns>This builder for fluent chaining</returns>
+    public InstallationBuilder WithInstallationPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Installation path cannot be null or empty", nameof(path));
+
+        _installationPath = path;
+        return this;
+    }
+
+    /// <summary>
     /// Builds the installation configuration.
     /// Returns an installation instance ready to be executed.
     /// </summary>
@@ -94,7 +144,10 @@ public class InstallationBuilder
         if (_logger == null)
             throw new InvalidOperationException("Logger is required. Use WithLogger() to set it.");
 
-        var context = new InstallationContext(_logger, _progress, _cancellationToken);
+        var context = new InstallationContext(_logger, _progress, _cancellationToken)
+        {
+            InstallationPath = _installationPath
+        };
 
         // Copy properties to context
         foreach (var kvp in _properties)
@@ -102,6 +155,6 @@ public class InstallationBuilder
             context.Properties[kvp.Key] = kvp.Value;
         }
 
-        return new Installation(_steps.AsReadOnly(), context);
+        return new Installation(_steps.AsReadOnly(), context, _options);
     }
 }

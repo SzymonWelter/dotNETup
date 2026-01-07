@@ -4,7 +4,7 @@ The library is organized into multiple NuGet packages for modularity and flexibi
 
 ## Core Package
 
-**YourLibrary.Core**
+**DotNetUp.Core**
 - Core abstractions (interfaces)
 - Fluent builder API
 - Orchestration engine
@@ -13,76 +13,76 @@ The library is organized into multiple NuGet packages for modularity and flexibi
 
 ## Built-in Step Packages
 
-### YourLibrary.Steps.FileSystem
+### DotNetUp.Steps.FileSystem
 - File copy, move, delete operations
 - Directory creation and management
 - File permission management
 - Symbolic links and junctions
-- **Dependencies:** YourLibrary.Core
+- **Dependencies:** DotNetUp.Core
 
-### YourLibrary.Steps.Registry
+### DotNetUp.Steps.Registry
 - Registry key creation and deletion
 - Registry value management
 - Permission management
 - Windows-only
-- **Dependencies:** YourLibrary.Core
+- **Dependencies:** DotNetUp.Core
 
-### YourLibrary.Steps.Services
+### DotNetUp.Steps.Services
 - Windows service installation
 - Service configuration
 - Service start/stop/restart
-- **Dependencies:** YourLibrary.Core
+- **Dependencies:** DotNetUp.Core
 
-### YourLibrary.Steps.Database
+### DotNetUp.Steps.Database
 - SQL Server migration steps
 - PostgreSQL support
 - MongoDB support
 - Generic SQL script execution
-- **Dependencies:** YourLibrary.Core + database drivers
+- **Dependencies:** DotNetUp.Core + database drivers
 
-### YourLibrary.Steps.IIS
+### DotNetUp.Steps.IIS
 - Application pool management
 - Website creation and configuration
 - Application configuration
 - Windows-only
-- **Dependencies:** YourLibrary.Core + Microsoft.Web.Administration
+- **Dependencies:** DotNetUp.Core + Microsoft.Web.Administration
 
-### YourLibrary.Steps.Network
+### DotNetUp.Steps.Network
 - HTTP download operations
 - Archive extraction (ZIP, TAR, 7Z)
 - FTP operations
 - Network drive mapping
-- **Dependencies:** YourLibrary.Core
+- **Dependencies:** DotNetUp.Core
 
 ## UI Packages (Optional)
 
-### YourLibrary.UI.Console
+### DotNetUp.UI.Console
 - RazorConsole integration
 - Interactive console installer
 - Progress visualization
-- **Dependencies:** YourLibrary.Core + RazorConsole
+- **Dependencies:** DotNetUp.Core + RazorConsole
 
-### YourLibrary.UI.WPF
+### DotNetUp.UI.WPF
 - WPF-based installer UI
 - Modern, customizable interface
-- **Dependencies:** YourLibrary.Core + WPF
+- **Dependencies:** DotNetUp.Core + WPF
 
 ## Testing Package
 
-### YourLibrary.Testing
+### DotNetUp.Testing
 - Test helpers and utilities
 - Mock implementations of steps
 - In-memory file system for testing
 - Test data builders
-- **Dependencies:** YourLibrary.Core
+- **Dependencies:** DotNetUp.Core
 
 ## Standalone Binary
 
-### YourLibrary.Installer (NuGet Global Tool)
+### DotNetUp.Installer (NuGet Global Tool)
 - Standalone executable
 - All built-in steps included
 - Configuration file support
-- **Dependencies:** All YourLibrary.Steps.* packages
+- **Dependencies:** All DotNetUp.Steps.* packages
 
 ---
 

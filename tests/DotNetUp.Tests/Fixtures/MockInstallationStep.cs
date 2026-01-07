@@ -18,21 +18,26 @@ public class MockInstallationStep : IInstallationStep
     public TimeSpan ExecutionDelay { get; set; } = TimeSpan.Zero;
     public List<string> CallHistory { get; } = new();
 
+    /// <summary>
+    /// Optional callback to override Execute behavior. If set, this is called instead of the default logic.
+    /// </summary>
+    public Func<InstallationStepResult>? ExecuteCallback { get; set; }
+
     public bool ValidateCalled { get; private set; }
     public bool ExecuteCalled { get; private set; }
     public bool RollbackCalled { get; private set; }
 
-    public Task<InstallationResult> ValidateAsync(InstallationContext context)
+    public Task<InstallationStepResult> ValidateAsync(InstallationContext context)
     {
         ValidateCalled = true;
         CallHistory.Add("Validate");
 
         return Task.FromResult(ValidateShouldSucceed
-            ? InstallationResult.SuccessResult($"{Name} validation succeeded")
-            : InstallationResult.FailureResult($"{Name} validation failed"));
+            ? InstallationStepResult.SuccessResult($"{Name} validation succeeded")
+            : InstallationStepResult.FailureResult($"{Name} validation failed"));
     }
 
-    public async Task<InstallationResult> ExecuteAsync(InstallationContext context)
+    public async Task<InstallationStepResult> ExecuteAsync(InstallationContext context)
     {
         ExecuteCalled = true;
         CallHistory.Add("Execute");
@@ -40,18 +45,22 @@ public class MockInstallationStep : IInstallationStep
         if (ExecutionDelay > TimeSpan.Zero)
             await Task.Delay(ExecutionDelay, context.CancellationToken);
 
+        // If a callback is provided, use it instead of the default logic
+        if (ExecuteCallback != null)
+            return ExecuteCallback();
+
         return ExecuteShouldSucceed
-            ? InstallationResult.SuccessResult($"{Name} executed")
-            : InstallationResult.FailureResult($"{Name} execution failed");
+            ? InstallationStepResult.SuccessResult($"{Name} executed")
+            : InstallationStepResult.FailureResult($"{Name} execution failed");
     }
 
-    public Task<InstallationResult> RollbackAsync(InstallationContext context)
+    public Task<InstallationStepResult> RollbackAsync(InstallationContext context)
     {
         RollbackCalled = true;
         CallHistory.Add("Rollback");
 
         return Task.FromResult(RollbackShouldSucceed
-            ? InstallationResult.SuccessResult($"{Name} rolled back")
-            : InstallationResult.FailureResult($"{Name} rollback failed"));
+            ? InstallationStepResult.SuccessResult($"{Name} rolled back")
+            : InstallationStepResult.FailureResult($"{Name} rollback failed"));
     }
 }

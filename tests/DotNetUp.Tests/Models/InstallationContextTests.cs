@@ -206,7 +206,8 @@ public class InstallationContextTests
         // Act
         context.ReportStepProgress("Processing", 50);
 
-        await Task.Yield();
+        // Wait for Progress<T> callback to be invoked (it's posted to SynchronizationContext)
+        await Task.Delay(100);
 
         // Assert
         progressReports.Should().HaveCount(1, "because one progress report should have been generated");

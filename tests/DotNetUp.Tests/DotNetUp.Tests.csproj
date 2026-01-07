@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetUp.Core\DotNetUp.Core.csproj" />
+    <ProjectReference Include="..\..\src\DotNetUp.Steps.FileSystem\DotNetUp.Steps.FileSystem.csproj" />
   </ItemGroup>
 
 </Project>

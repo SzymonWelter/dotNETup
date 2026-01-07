@@ -63,7 +63,7 @@ public class EndToEndTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeTrue();
@@ -133,7 +133,7 @@ public class EndToEndTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeFalse();
@@ -194,7 +194,7 @@ public class EndToEndTests
         var installation = builder.Build();
 
         // Act - Start execution and cancel during step2
-        var task = installation.ExecuteAsync();
+        var task = installation.InstallAsync();
         await Task.Delay(50); // Wait for step1 to complete
         cts.Cancel();
 
@@ -231,7 +231,7 @@ public class EndToEndTests
         var installation = builder.Build();
 
         // Act
-        await installation.ExecuteAsync();
+        await installation.InstallAsync();
 
         // Assert - Verify SetCurrentStep was called by checking logs
         // The executor should log step transitions
@@ -281,7 +281,7 @@ public class EndToEndTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeFalse();
@@ -329,7 +329,7 @@ public class EndToEndTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeFalse();
@@ -397,7 +397,7 @@ public class EndToEndTests
 
         // Act
         var installation = builder.Build();
-        var result = await installation.ExecuteAsync();
+        var result = await installation.InstallAsync();
 
         // Assert
         result.Success.Should().BeTrue();
