@@ -63,4 +63,14 @@ public class MockInstallationStep : IInstallationStep
             ? InstallationStepResult.SuccessResult($"{Name} rolled back")
             : InstallationStepResult.FailureResult($"{Name} rollback failed"));
     }
+
+    public bool DisposeCalled { get; private set; }
+
+    public ValueTask DisposeAsync()
+    {
+        DisposeCalled = true;
+        CallHistory.Add("Dispose");
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
 }

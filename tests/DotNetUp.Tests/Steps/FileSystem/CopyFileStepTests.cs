@@ -323,14 +323,15 @@ public class CopyFileStepTests : IDisposable
 
         // Act
         var result = await step.RollbackAsync(context);
+        await step.DisposeAsync(); // Simulate the finally block behavior
 
         // Assert
         result.Success.Should().BeTrue();
         File.ReadAllText(_destinationFile).Should().Be(originalContent, "destination should be restored to original content after rollback");
 
-        // Backup file should be cleaned up
+        // Backup file should be cleaned up by DisposeAsync
         var backupFiles = Directory.GetFiles(_testDir, "*.backup_*");
-        backupFiles.Should().BeEmpty("backup files should be deleted after rollback");
+        backupFiles.Should().BeEmpty("backup files should be deleted after disposal");
     }
 
     [Fact]

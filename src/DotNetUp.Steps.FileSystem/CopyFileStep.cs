@@ -34,6 +34,7 @@ public class CopyFileStep : IInstallationStep
 
     private string? _backupPath;
     private bool _destinationExistedBefore;
+    private bool _copySucceeded;
 
     /// <summary>
     /// Creates a new copy file step.
@@ -142,11 +143,15 @@ public class CopyFileStep : IInstallationStep
                 _backupPath = $"{DestinationPath}.backup_{Guid.NewGuid()}";
                 context.Logger.LogDebug("Backing up existing file to: {BackupPath}", _backupPath);
                 File.Copy(DestinationPath, _backupPath, overwrite: false);
+                context.Logger.LogDebug("Backup created successfully");
             }
 
             // Copy the file
             context.Logger.LogDebug("Copying file...");
             File.Copy(SourcePath, DestinationPath, overwrite: Overwrite);
+
+            // Mark copy as successful
+            _copySucceeded = true;
 
             context.Logger.LogInformation("File copied successfully");
             return Task.FromResult(InstallationStepResult.SuccessResult(
@@ -154,20 +159,7 @@ public class CopyFileStep : IInstallationStep
         }
         catch (Exception ex)
         {
-            context.Logger.LogError(ex, "Failed to copy file");
-
-            // Clean up backup if it was created
-            if (_backupPath != null && File.Exists(_backupPath))
-            {
-                try
-                {
-                    File.Delete(_backupPath);
-                }
-                catch
-                {
-                    // Ignore cleanup errors
-                }
-            }
+            context.Logger.LogError(ex, "Failed to copy file, original file will be restored");
 
             return Task.FromResult(InstallationStepResult.FailureResult(
                 $"Failed to copy file: {ex.Message}",
@@ -182,36 +174,105 @@ public class CopyFileStep : IInstallationStep
 
         try
         {
-            // If we created a backup, restore it
+            // Scenario 1: Backup exists (either copy succeeded or failed after backup)
+            // - If copy succeeded: rollback because a later step failed
+            // - If copy failed: restore original file (destination may be corrupted)
             if (_backupPath != null && File.Exists(_backupPath))
             {
-                context.Logger.LogDebug("Restoring backup from: {BackupPath}", _backupPath);
+                if (_copySucceeded)
+                {
+                    context.Logger.LogDebug(
+                        "Copy succeeded but later step failed. Restoring backup from: {BackupPath}",
+                        _backupPath);
+                }
+                else
+                {
+                    context.Logger.LogWarning(
+                        "Copy failed and destination may be corrupted. Restoring original from backup: {BackupPath}",
+                        _backupPath);
+                }
+
+                // Restore the backup (overwrite potentially corrupted destination)
                 File.Copy(_backupPath, DestinationPath, overwrite: true);
-                File.Delete(_backupPath);
-                context.Logger.LogInformation("Backup restored successfully");
+
+                // Note: Backup file deletion is handled by DisposeAsync (always called in finally block)
+                // This ensures cleanup happens even if rollback throws an exception
+
+                context.Logger.LogInformation("Original file restored successfully from backup");
+                return Task.FromResult(InstallationStepResult.SuccessResult("Rollback successful - original file restored"));
             }
-            // If destination didn't exist before and we created it, delete it
+            // Scenario 2: No backup exists, but destination didn't exist before
+            // This means we created a new file (copy may have succeeded or partially succeeded)
             else if (!_destinationExistedBefore && File.Exists(DestinationPath))
             {
                 context.Logger.LogDebug("Deleting newly created file: {Destination}", DestinationPath);
                 File.Delete(DestinationPath);
                 context.Logger.LogInformation("Newly created file deleted successfully");
+                return Task.FromResult(InstallationStepResult.SuccessResult("Rollback successful - new file removed"));
             }
+            // Scenario 3: No action needed
             else
             {
-                context.Logger.LogDebug("No rollback action needed");
+                context.Logger.LogDebug("No rollback action needed (no backup and destination existed before)");
+                return Task.FromResult(InstallationStepResult.SuccessResult("Rollback successful - no action needed"));
             }
-
-            return Task.FromResult(InstallationStepResult.SuccessResult("Rollback successful"));
         }
         catch (Exception ex)
         {
-            // Best-effort rollback: log the error but return success
+            // Best-effort rollback: log the error but return failure result
             // The executor will log this as a warning and continue with other rollbacks
             context.Logger.LogWarning(ex, "Rollback encountered an error (best-effort continues)");
             return Task.FromResult(InstallationStepResult.FailureResult(
                 $"Rollback failed: {ex.Message}",
                 ex));
         }
+    }
+
+    /// <summary>
+    /// Cleans up temporary resources (backup files) created during execution.
+    /// Called ALWAYS in finally block regardless of success/failure or ContinueOnError settings.
+    /// This is the single source of truth for backup file cleanup.
+    ///
+    /// Responsibilities:
+    /// 1. Restore backup if copy failed (prevents data corruption)
+    /// 2. Delete backup file (prevents orphaned resources)
+    ///
+    /// Why not delete in RollbackAsync?
+    /// - DisposeAsync is ALWAYS called (finally block)
+    /// - RollbackAsync may not be called (ContinueOnError, success)
+    /// - RollbackAsync may throw before cleanup
+    /// - Single Responsibility: disposal handles cleanup
+    /// </summary>
+    public ValueTask DisposeAsync()
+    {
+        // Only process if we created a backup
+        if (_backupPath != null && File.Exists(_backupPath))
+        {
+            try
+            {
+                // If copy failed, restore original file to prevent data corruption
+                // This handles ContinueOnError scenarios where rollback wasn't called
+                if (!_copySucceeded && _destinationExistedBefore)
+                {
+                    File.Copy(_backupPath, DestinationPath, overwrite: true);
+                }
+
+                // Always delete backup file
+                // Scenarios:
+                // 1. Copy succeeded → backup no longer needed
+                // 2. Copy failed → backup restored above, now can delete
+                // 3. Rollback called → backup was restored, now can delete
+                File.Delete(_backupPath);
+            }
+            catch
+            {
+                // Best-effort: silently ignore errors
+                // Backup file may be orphaned but we tried our best
+                // Can't log here as we don't have context
+            }
+        }
+
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 }

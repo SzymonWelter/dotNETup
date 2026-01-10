@@ -228,6 +228,13 @@ internal class Installation : IInstallation
             // Rethrow to propagate cancellation
             throw;
         }
+        finally
+        {
+            // Always dispose all executed steps to clean up temporary resources
+            // This ensures backup files and other temp resources are cleaned up
+            // even when ContinueOnError=true or rollback wasn't called
+            await DisposeStepsAsync(executedSteps);
+        }
     }
 
     /// <summary>
@@ -259,6 +266,7 @@ internal class Installation : IInstallation
 
         string? failedStepName = null;
         var hasCriticalFailures = false;
+        var executedSteps = new List<ConfiguredStep>();
 
         try
         {
@@ -291,6 +299,7 @@ internal class Installation : IInstallation
                 {
                     var result = await configuredStep.Step.RollbackAsync(_context);
                     stepResults[configuredStep.Name] = result;
+                    executedSteps.Add(configuredStep);
 
                     if (!result.Success)
                     {
@@ -360,6 +369,11 @@ internal class Installation : IInstallation
         {
             _context.Logger.LogWarning("Uninstallation cancelled by user");
             throw;
+        }
+        finally
+        {
+            // Always dispose all executed steps to clean up temporary resources
+            await DisposeStepsAsync(executedSteps);
         }
     }
 
@@ -479,6 +493,39 @@ internal class Installation : IInstallation
         }
 
         _context.Logger.LogWarning("Rollback completed (best-effort)");
+    }
+
+    /// <summary>
+    /// Disposes all executed steps to clean up temporary resources.
+    /// Called in finally block to ensure cleanup happens regardless of success/failure.
+    /// Handles ContinueOnError scenarios where rollback is not called.
+    /// </summary>
+    private async Task DisposeStepsAsync(List<ConfiguredStep> executedSteps)
+    {
+        if (executedSteps.Count == 0)
+        {
+            return;
+        }
+
+        _context.Logger.LogDebug("Disposing {StepCount} executed steps to clean up temporary resources", executedSteps.Count);
+
+        foreach (var configuredStep in executedSteps)
+        {
+            try
+            {
+                await configuredStep.Step.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                // Best-effort: log but don't fail on disposal errors
+                _context.Logger.LogWarning(
+                    ex,
+                    "Failed to dispose step {StepName}. Temporary resources may be orphaned.",
+                    configuredStep.Name);
+            }
+        }
+
+        _context.Logger.LogDebug("Step disposal completed");
     }
 
     /// <summary>

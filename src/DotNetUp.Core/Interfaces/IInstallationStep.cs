@@ -7,7 +7,7 @@ namespace DotNetUp.Core.Interfaces;
 /// Every installation operation (copy files, create registry keys, install services, etc.)
 /// must implement this interface.
 /// </summary>
-public interface IInstallationStep
+public interface IInstallationStep : IAsyncDisposable
 {
     /// <summary>
     /// Gets the unique name of this installation step.
@@ -46,4 +46,13 @@ public interface IInstallationStep
     /// <param name="context">The installation context</param>
     /// <returns>A result indicating the rollback outcome (failures are logged but not critical)</returns>
     Task<InstallationStepResult> RollbackAsync(InstallationContext context);
+
+    // Note: IAsyncDisposable.DisposeAsync() inherited from IAsyncDisposable
+    // DisposeAsync() is called at the end of installation to clean up any temporary resources
+    // (backups, temp files, locks, etc.) regardless of success/failure or ContinueOnError settings.
+    // This ensures no orphaned resources when:
+    // - Step fails with ContinueOnError=true (no rollback)
+    // - Uninstall operations
+    // - Any scenario where RollbackAsync is not called
+    // Implementation should be idempotent and safe to call multiple times.
 }
