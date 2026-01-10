@@ -9,21 +9,32 @@ The fundamental contract that all installation operations must implement.
 - Support validation before execution
 - Execute the installation operation
 - Support rollback if needed
+- Clean up temporary resources (backups, temp files, locks)
 
 **Key Methods:**
+- `ValidateAsync()` - Checks if the operation can be performed
 - `ExecuteAsync()` - Performs the installation operation
 - `RollbackAsync()` - Undoes the operation if installation fails
-- `ValidateAsync()` - Checks if the operation can be performed
+- `DisposeAsync()` - Cleans up temporary resources (inherited from IAsyncDisposable)
 
 **Properties:**
 - `Name` - Human-readable name of the step
 - `Description` - Detailed description of what the step does
+
+**Disposal Pattern:**
+The interface extends `IAsyncDisposable` to ensure proper cleanup of temporary resources:
+- `DisposeAsync()` is called **always** at the end of installation
+- Called regardless of success/failure or ContinueOnError settings
+- Handles cleanup when rollback is not called (e.g., ContinueOnError=true)
+- Must be idempotent and safe to call multiple times
+- Examples: delete backup files, release locks, close connections, remove temp files
 
 **Design Goals:**
 - Simple to implement
 - Testable in isolation
 - Composable into complex workflows
 - Self-contained (no hidden dependencies)
+- Guaranteed resource cleanup
 
 ---
 
@@ -110,6 +121,7 @@ The main executor that orchestrates the installation workflow.
 - Report progress
 - Validate prerequisites
 - Manage state
+- Ensure proper resource cleanup
 
 **Key Methods:**
 - `InstallAsync()` - Execute the installation
@@ -121,12 +133,21 @@ The main executor that orchestrates the installation workflow.
 2. Execution Phase - Execute steps sequentially
 3. Success - Installation complete
 4. Failure - Trigger rollback of completed steps
+5. Cleanup Phase - **Always** dispose all executed steps (in finally block)
 
 **Error Handling:**
 - Automatic rollback on failure (if enabled)
 - Rollback executes in reverse order
 - Best-effort rollback (continues even if rollback steps fail)
 - Comprehensive error logging
+
+**Resource Cleanup (New):**
+- `DisposeAsync()` called on all executed steps in finally block
+- Ensures cleanup happens regardless of success/failure
+- Handles ContinueOnError scenarios where rollback isn't called
+- Prevents orphaned resources (backup files, temp files, locks)
+- Best-effort disposal: logs failures but continues
+- Called after rollback completes (if rollback was triggered)
 
 ---
 

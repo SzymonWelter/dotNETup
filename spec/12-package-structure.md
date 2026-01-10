@@ -16,8 +16,10 @@ The library is organized into multiple NuGet packages for modularity and flexibi
 ### DotNetUp.Steps.FileSystem
 - File copy, move, delete operations
 - Directory creation and management
+- Directory copy, move, delete operations
 - File permission management
 - Symbolic links and junctions
+- Archive extraction (ZIP, TAR, 7Z)
 - **Dependencies:** DotNetUp.Core
 
 ### DotNetUp.Steps.Registry
@@ -49,7 +51,6 @@ The library is organized into multiple NuGet packages for modularity and flexibi
 
 ### DotNetUp.Steps.Network
 - HTTP download operations
-- Archive extraction (ZIP, TAR, 7Z)
 - FTP operations
 - Network drive mapping
 - **Dependencies:** DotNetUp.Core

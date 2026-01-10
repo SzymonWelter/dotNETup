@@ -7,17 +7,28 @@
 The primary plugin type - atomic operations that can be composed into workflows.
 
 **Characteristics:**
-- Implement IInstallationStep interface
+- Implement IInstallationStep interface (extends IAsyncDisposable)
 - Self-contained and stateless
-- Support execution, validation, and rollback
+- Support execution, validation, rollback, and disposal
 - Can be unit tested independently
+- Automatically cleaned up after execution
+
+**Core Methods:**
+- `ValidateAsync()` - Check prerequisites
+- `ExecuteAsync()` - Perform the operation
+- `RollbackAsync()` - Undo changes (best-effort)
+- `DisposeAsync()` - Clean up temporary resources (always called)
 
 **Examples:**
-- File copy operation
+- File copy, move, delete operations
+- Archive extraction
 - Registry key creation
 - Service installation
 - Database migration
 - Custom business logic
+
+**Resource Management:**
+Steps that create temporary resources (backups, temp files, locks) must implement `DisposeAsync()` to ensure cleanup. The framework guarantees disposal is called regardless of success/failure or ContinueOnError settings.
 
 **Registration:**
 ```
@@ -159,6 +170,7 @@ Group multiple steps into a single logical unit:
 - WebApplicationInstall (IIS + files + config)
 - DatabaseSetup (create DB + schema + seed data)
 - ServiceInstall (install + configure + start)
+- ExtractAndConfigure (extract archive + copy files + modify registry)
 
 ### Conditional Steps
 
@@ -171,5 +183,92 @@ Execute steps based on conditions:
 
 Execute steps concurrently:
 - Multiple downloads
+- Multiple file extractions
 - Independent installations
 - Performance optimization
+
+---
+
+## Built-in Step Packages
+
+### FileSystem Package (DotNetUp.Steps.FileSystem)
+
+**Scope:** File and directory operations, archive handling
+
+**Operations:**
+- File copy, move, delete
+- Directory copy, move, delete (recursive)
+- File permission management
+- Symbolic links and junctions
+- Archive extraction (ZIP, TAR, 7Z)
+
+**Dependencies:** DotNetUp.Core only
+
+**Platform Support:** Windows, Linux, macOS
+
+### Network Package (DotNetUp.Steps.Network)
+
+**Scope:** Network-based data transfer
+
+**Operations:**
+- HTTP/HTTPS download operations
+- FTP operations
+- Network drive mapping (Windows)
+
+**Dependencies:** DotNetUp.Core only
+
+**Platform Support:** Varies by operation (FTP/mapping Windows-only)
+
+### Registry Package (DotNetUp.Steps.Registry)
+
+**Scope:** Windows registry modifications
+
+**Operations:**
+- Registry key creation, update, deletion
+- Registry value management
+- Permission management
+
+**Dependencies:** DotNetUp.Core
+
+**Platform Support:** Windows only
+
+### Services Package (DotNetUp.Steps.Services)
+
+**Scope:** Windows service management
+
+**Operations:**
+- Service installation
+- Service configuration
+- Service start/stop/restart
+
+**Dependencies:** DotNetUp.Core
+
+**Platform Support:** Windows only
+
+### Database Package (DotNetUp.Steps.Database)
+
+**Scope:** Database operations and migrations
+
+**Operations:**
+- SQL Server migration steps
+- PostgreSQL support
+- MongoDB support
+- Generic SQL script execution
+
+**Dependencies:** DotNetUp.Core + database drivers
+
+**Platform Support:** Cross-platform
+
+### IIS Package (DotNetUp.Steps.IIS)
+
+**Scope:** Internet Information Services management
+
+**Operations:**
+- Application pool management
+- Website creation and configuration
+- Application configuration
+- Bindings and SSL setup
+
+**Dependencies:** DotNetUp.Core + Microsoft.Web.Administration
+
+**Platform Support:** Windows only

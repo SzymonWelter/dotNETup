@@ -113,12 +113,12 @@ All components mockable. Each step independently unit testable.
 
 ## Built-In Step Types (Later Phases)
 
-- **FileSystem** - Copy, move, delete, permissions
+- **FileSystem** - Copy, move, delete, permissions, archive extraction
 - **Registry** - Windows registry operations
 - **Services** - Windows service management
 - **Database** - SQL migrations and scripts
 - **IIS** - Application pool and website setup
-- **Network** - Downloads, archive extraction
+- **Network** - Downloads, FTP, network drive mapping
 
 ---
 
